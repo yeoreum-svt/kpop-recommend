@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>気分とジャンルで選ぶK-POP</title>
+  <style>
+    body {
+      font-family: "Noto Sans JP", sans-serif;
+      background: #fdfcfa;
+      color: #444;
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+    }
+    h2 {
+      color: #c2798b;
+      font-size: 1.5em;
+      margin-bottom: 1em;
+    }
+    .section-title {
+      font-weight: bold;
+      color: #a0526d;
+      margin-top: 1.2em;
+      margin-bottom: 0.5em;
+    }
+    #feelings, #genres {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    #feelings button, #genres button {
+      padding: 10px 18px;
+      border-radius: 24px;
+      background: #fff;
+      border: 1.5px solid #e3cfcf;
+      cursor: pointer;
+      font-size: 0.95em;
+      transition: all 0.3s ease;
+      box-shadow: 1px 1px 3px rgba(0,0,0,0.05);
+    }
+    #feelings button.selected, #genres button.selected {
+      background-color: #ffe3ec;
+      color: #c2798b;
+      border-color: #c2798b;
+    }
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      20% { transform: translateX(-4px); }
+      40% { transform: translateX(4px); }
+      60% { transform: translateX(-4px); }
+      80% { transform: translateX(4px); }
+      100% { transform: translateX(0); }
+    }
+    #feelings button.shake, #genres button.shake {
+      animation: shake 0.3s;
+    }
+    .recommend-btn {
+      display: block;
+      margin: 30px auto 0;
+      padding: 12px 26px;
+      font-size: 1.05em;
+      font-weight: 600;
+      background: linear-gradient(135deg, #ffd1dc, #ffe4e1);
+      color: #a0526d;
+      border: none;
+      border-radius: 30px;
+      box-shadow: 0 4px 10px rgba(255, 182, 193, 0.3);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .recommend-btn:hover {
+      transform: scale(1.03);
+    }
+    #result {
+      margin-top: 30px;
+      background: #fffdfd;
+      border: 1px solid #f0e5e5;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 2px 2px 10px rgba(0,0,0,0.03);
+    }
+    iframe {
+      margin-top: 10px;
+      border-radius: 8px;
+    }
+    em {
+      color: #777;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <h2>🎧 今の気分とジャンルで選ぶ、あなたにぴったりのK-POP</h2>
+  <div class="section-title">今の気分を選んでください（最大2つ）</div>
+  <div id="feelings">
+    <button onclick="selectFeeling(this, '失恋')">失恋</button>
+    <button onclick="selectFeeling(this, '不安')">不安</button>
+    <button onclick="selectFeeling(this, '孤独')">孤独</button>
+    <button onclick="selectFeeling(this, '期待')">期待</button>
+    <button onclick="selectFeeling(this, '青春')">青春</button>
+    <button onclick="selectFeeling(this, '希望')">希望</button>
+    <button onclick="selectFeeling(this, '活力')">活力</button>
+    <button onclick="selectFeeling(this, '自信')">自信</button>
+    <button onclick="selectFeeling(this, '決意')">決意</button>
+    <button onclick="selectFeeling(this, '挑戦')">挑戦</button>
+  </div>
+
+  <div class="section-title">どんな曲が好きですか？（1つだけ選択）</div>
+  <div id="genres">
+    <button onclick="selectGenre(this, 'バラード')">バラード</button>
+    <button onclick="selectGenre(this, 'ロック')">ロック</button>
+    <button onclick="selectGenre(this, 'ポップ')">ポップ</button>
+    <button onclick="selectGenre(this, 'ヒップホップ')">ヒップホップ</button>
+    <button onclick="selectGenre(this, 'ジャズ')">ジャズ</button>
+    <button onclick="selectGenre(this, 'R&B')">R&B</button>
+    <button onclick="selectGenre(this, 'ダンス')">ダンス</button>
+    <button onclick="selectGenre(this, 'エレクトロ')">エレクトロ</button>
+  </div>
+
+  <button class="recommend-btn" onclick="recommendSong()">🌷 おすすめ表示</button>
+
+  <div id="result" style="display:none;">
+    <h3 id="title"></h3>
+    <p id="bpm"></p>
+    <p><em id="lyrics"></em></p>
+    <div id="video"></div>
+  </div>
+
+  <script>
+    // 感情スコア
+    const emotionScores = {
+      "失恋": 10, "不安": 20, "孤独": 25, "期待": 40, "青春": 50, "希望": 60, "活力": 70, "自信": 75, "決意": 85, "挑戦": 90
+    };
+    // 曲データにgenre属性を追加（複数可、主要ジャンルでOK）
+    const songs = [
+      {
+        title: "Hug - SEVENTEEN",
+        score: 10,
+        genre: ["バラード"],
+        bpm: "72 BPM",
+        lyrics: "そばにいてくれるだけでよかった — Just being by your side was enough",
+        youtube: "https://www.youtube.com/embed/r6H0L_6Nehg"
+      },
+      {
+        title: "Don't Wanna Cry - SEVENTEEN",
+        score: 15,
+        genre: ["バラード", "ダンス"],
+        bpm: "122 BPM",
+        lyrics: "君を失うのが怖かった — I was afraid of losing you",
+        youtube: "https://www.youtube.com/embed/9M7k9ZV67c0"
+      },
+      {
+        title: "Smile Flower - SEVENTEEN",
+        score: 25,
+        genre: ["バラード"],
+        bpm: "100 BPM",
+        lyrics: "どんな季節も僕たちは共に — No matter the season, we are together",
+        youtube: "https://www.youtube.com/embed/F6YvyFUjz50"
+      },
+      {
+        title: "Run to You - SEVENTEEN",
+        score: 35,
+        genre: ["ポップ", "ダンス"],
+        bpm: "108 BPM",
+        lyrics: "今すぐ君の元へ走るよ — I’ll run to you now",
+        youtube: "https://www.youtube.com/embed/cFVwSKW2ySA"
+      },
+      {
+        title: "Lean On Me - SEVENTEEN",
+        score: 40,
+        genre: ["バラード", "R&B"],
+        bpm: "95 BPM",
+        lyrics: "寄りかかってもいいよ — You can lean on me",
+        youtube: "https://www.youtube.com/embed/QZRXNIhb_UQ"
+      },
+      {
+        title: "Yawn - SEVENTEEN",
+        score: 45,
+        genre: ["バラード", "ジャズ"],
+        bpm: "85 BPM",
+        lyrics: "眠気に包まれて思い出す — Wrapped in drowsiness, I remember",
+        youtube: "https://www.youtube.com/embed/zMb9IYM2mrY"
+      },
+      {
+        title: "All My Love - SEVENTEEN",
+        score: 50,
+        genre: ["バラード", "ポップ"],
+        bpm: "92 BPM",
+        lyrics: "全ての愛を君に — All my love for you",
+        youtube: "https://www.youtube.com/embed/62WxBUmGUd0"
+      },
+      {
+        title: "To You - SEVENTEEN",
+        score: 55,
+        genre: ["ポップ"],
+        bpm: "110 BPM",
+        lyrics: "君のところへ向かう — Heading to you",
+        youtube: "https://www.youtube.com/embed/0MvzN8CrUE0"
+      },
+      {
+        title: "Second Life - SEVENTEEN",
+        score: 60,
+        genre: ["R&B", "バラード"],
+        bpm: "89 BPM",
+        lyrics: "二度目の人生を君と — A second life with you",
+        youtube: "https://www.youtube.com/embed/yKUuK77Tzsg"
+      },
+      {
+        title: "Us, Again - SEVENTEEN",
+        score: 65,
+        genre: ["ポップ", "R&B"],
+        bpm: "97 BPM",
+        lyrics: "また僕らでいよう — Let’s be us again",
+        youtube: "https://www.youtube.com/embed/szzFlbMfFJY"
+      },
+      {
+        title: "Home - SEVENTEEN",
+        score: 70,
+        genre: ["ポップ", "バラード"],
+        bpm: "115 BPM",
+        lyrics: "君は僕のホーム — You are my home",
+        youtube: "https://www.youtube.com/embed/f6YvyjK0b9o"
+      },
+      {
+        title: "Darl+ing - SEVENTEEN",
+        score: 75,
+        genre: ["ポップ"],
+        bpm: "118 BPM",
+        lyrics: "君と僕、二人でひとつ — You and I, we are one",
+        youtube: "https://www.youtube.com/embed/bTtNV6hgDno"
+      },
+      {
+        title: "Falling Flower - SEVENTEEN",
+        score: 80,
+        genre: ["バラード", "ポップ"],
+        bpm: "123 BPM",
+        lyrics: "花びらが舞い落ちるように — Like a falling flower",
+        youtube: "https://www.youtube.com/embed/0OuD6UQGLcU"
+      },
+      {
+        title: "Thanks - SEVENTEEN",
+        score: 85,
+        genre: ["ダンス", "ロック"],
+        bpm: "121 BPM",
+        lyrics: "感謝の気持ちは言葉じゃ足りない — Words aren’t enough for my thanks",
+        youtube: "https://www.youtube.com/embed/VCDWg0ljbFQ"
+      },
+      {
+        title: "Rock With You - SEVENTEEN",
+        score: 90,
+        genre: ["ロック", "ダンス"],
+        bpm: "130 BPM",
+        lyrics: "君とならどこまでも行ける — I can go anywhere with you",
+        youtube: "https://www.youtube.com/embed/WpuatuzSDK4"
+      },
+      {
+        title: "One and Only - BOYNEXTDOOR",
+        score: 12,
+        genre: ["ポップ", "R&B"],
+        bpm: "98 BPM",
+        lyrics: "너만 보면 웃게 돼 — 君を見るだけで笑顔になる",
+        youtube: "https://www.youtube.com/embed/Abp0gOw0jzY"
+      },
+      {
+        title: "Sugar Rush Ride - TXT",
+        score: 22,
+        genre: ["ダンス", "ポップ"],
+        bpm: "105 BPM",
+        lyrics: "달콤한 중독이야 — 甘い中毒だ",
+        youtube: "https://www.youtube.com/embed/NMNmj7ZLZGg"
+      },
+      {
+        title: "In Bloom - ZB1",
+        score: 18,
+        genre: ["ポップ"],
+        bpm: "110 BPM",
+        lyrics: "피어나 다시 태어나 — 咲いてもう一度生まれる",
+        youtube: "https://www.youtube.com/embed/trzeUClQIIg"
+      },
+      {
+        title: "Time of Our Life - DAY6",
+        score: 50,
+        genre: ["ロック", "ポップ"],
+        bpm: "130 BPM",
+        lyrics: "지금 이 순간이 우리의 시간 — 今この瞬間が僕らの時間",
+        youtube: "https://www.youtube.com/embed/vnS_jn2uibs"
+      },
+      {
+        title: "Flare - LUCY",
+        score: 45,
+        genre: ["ロック"],
+        bpm: "115 BPM",
+        lyrics: "우린 서로의 빛 — 僕らはお互いの光",
+        youtube: "https://www.youtube.com/embed/lJhOJ02yFhM"
+      },
+      {
+        title: "Universe (Let's Play Ball) - NCT U",
+        score: 70,
+        genre: ["エレクトロ", "ダンス"],
+        bpm: "125 BPM",
+        lyrics: "우린 끝없이 달려 — 僕らは果てしなく走る",
+        youtube: "https://www.youtube.com/embed/GZbRLZ6N4Z4"
+      },
+      {
+        title: "Guerrilla - ATEEZ",
+        score: 90,
+        genre: ["ロック", "エレクトロ"],
+        bpm: "150 BPM",
+        lyrics: "우린 세상을 바꿔 — 僕らは世界を変える",
+        youtube: "https://www.youtube.com/embed/hzRg_HNVFb8"
+      },
+      {
+        title: "Love Love Love - Epik High",
+        score: 40,
+        genre: ["ヒップホップ"],
+        bpm: "94 BPM",
+        lyrics: "사랑은 아프다 — 愛は痛い",
+        youtube: "https://www.youtube.com/embed/6QFwo57WKwg"
+      },
+      {
+        title: "BAAAM - Dynamic Duo",
+        score: 75,
+        genre: ["ヒップホップ"],
+        bpm: "135 BPM",
+        lyrics: "밤새우게 해 널 — 君のせいで一晩中眠れない",
+        youtube: "https://www.youtube.com/embed/Ut5tqXcHRMI"
+      },
+      {
+        title: "Spring Day - BTS",
+        score: 15,
+        genre: ["バラード", "ポップ"],
+        bpm: "105 BPM",
+        lyrics: "보고 싶다 — 会いたい",
+        youtube: "https://www.youtube.com/embed/xEeFrLSkMm8"
+      },
+      {
+        title: "I'm Sorry - CNBLUE",
+        score: 20,
+        genre: ["ロック"],
+        bpm: "110 BPM",
+        lyrics: "정말 미안해 — 本当にごめん",
+        youtube: "https://www.youtube.com/embed/T9cZpNe4pxg"
+      },
+      {
+        title: "Love in the Ice - 東方神起",
+        score: 30,
+        genre: ["バラード"],
+        bpm: "90 BPM",
+        lyrics: "愛を信じたい — 愛を信じたい",
+        youtube: "https://www.youtube.com/embed/C3EJrkJQmCY"
+      },
+      {
+        title: "View - SHINee",
+        score: 60,
+        genre: ["エレクトロ", "ポップ"],
+        bpm: "115 BPM",
+        lyrics: "이 모든 감정은 널 향해 — このすべての感情は君へ向かってる",
+        youtube: "https://www.youtube.com/embed/UF53cptEE5k"
+      },
+      {
+        title: "Sorry Sorry - SUPER JUNIOR",
+        score: 72,
+        genre: ["ダンス", "ポップ"],
+        bpm: "130 BPM",
+        lyrics: "Sorry, sorry, sorry, sorry — ごめん、ごめん、ごめん、ごめん",
+        youtube: "https://www.youtube.com/embed/x6QA3m58DQw"
+      },
+      {
+        title: "Get A Guitar - RIIZE",
+        score: 55,
+        genre: ["ロック", "ダンス"],
+        bpm: "120 BPM",
+        lyrics: "기타 하나로 시작된 우리 — ギターひとつで始まった僕ら",
+        youtube: "https://www.youtube.com/embed/tEb1QRu0guQ"
+      },
+      {
+        title: "Polaroid Love - ENHYPEN",
+        score: 34,
+        genre: ["ポップ"],
+        bpm: "100 BPM",
+        lyrics: "이상하게 끌려 — なぜか惹かれてしまう",
+        youtube: "https://www.youtube.com/embed/kQlzjqZTnbE"
+      }
+    ];
+
+    let selectedFeelings = [];
+    let selectedGenre = null;
+
+    // 感情の選択(最大2つ)
+    function selectFeeling(btn, feeling) {
+      const idx = selectedFeelings.indexOf(feeling);
+      if (idx !== -1) {
+        selectedFeelings.splice(idx, 1);
+        btn.classList.remove("selected");
+      } else {
+        if (selectedFeelings.length >= 2) {
+          btn.classList.add("shake");
+          setTimeout(() => btn.classList.remove("shake"), 350);
+          alert("気分は最大2つまで選べます。");
+          return;
+        }
+        selectedFeelings.push(feeling);
+        btn.classList.add("selected");
+      }
+      document.getElementById("result").style.display = "none";
+    }
+    // ジャンルの選択(最大1つ)
+    function selectGenre(btn, genre) {
+      if (selectedGenre === genre) {
+        selectedGenre = null;
+        btn.classList.remove("selected");
+      } else {
+        // 既に他のジャンルが選択済みならアラート
+        const prev = document.querySelector('#genres button.selected');
+        if (prev) {
+          prev.classList.remove("selected");
+          if (prev === btn) return; // 同じボタンをクリックした時はreturn
+        }
+        selectedGenre = genre;
+        btn.classList.add("selected");
+      }
+      document.getElementById("result").style.display = "none";
+    }
+
+    // ボタン選択状態リセット
+    function resetSelections() {
+      selectedFeelings = [];
+      selectedGenre = null;
+      document.querySelectorAll('#feelings button.selected').forEach(btn => btn.classList.remove("selected"));
+      document.querySelectorAll('#genres button.selected').forEach(btn => btn.classList.remove("selected"));
+    }
+
+    // おすすめ曲の選定
+    function recommendSong() {
+      if (selectedFeelings.length === 0 && !selectedGenre) {
+        alert("気分またはジャンルを少なくとも1つ選択してください。");
+        return;
+      }
+      // 感情の平均スコア算出
+      let avgScore = null;
+      if (selectedFeelings.length > 0) {
+        avgScore = selectedFeelings.map(f => emotionScores[f]).reduce((a, b) => a + b, 0) / selectedFeelings.length;
+      }
+
+      // フィルタリング
+      let filteredSongs = songs;
+      if (selectedGenre) {
+        filteredSongs = filteredSongs.filter(song => song.genre.includes(selectedGenre));
+      }
+      // さらに感情マッチング
+      if (avgScore !== null) {
+        let minDiff = Infinity, bestMatches = [];
+        filteredSongs.forEach(song => {
+          const diff = Math.abs(song.score - avgScore);
+          if (diff < minDiff) {
+            minDiff = diff;
+            bestMatches = [song];
+          } else if (diff === minDiff) {
+            bestMatches.push(song);
+          }
+        });
+        // ジャンルで絞った結果0件なら全曲から感情だけで再マッチング
+        if (bestMatches.length === 0 && selectedGenre) {
+          filteredSongs = songs;
+          minDiff = Infinity; bestMatches = [];
+          filteredSongs.forEach(song => {
+            const diff = Math.abs(song.score - avgScore);
+            if (diff < minDiff) {
+              minDiff = diff;
+              bestMatches = [song];
+            } else if (diff === minDiff) {
+              bestMatches.push(song);
+            }
+          });
+        }
+        filteredSongs = bestMatches;
+      }
+
+      // どちらも選ばれていない場合
+      if (filteredSongs.length === 0) {
+        alert("おすすめできる曲が見つかりませんでした。別の組み合わせでお試しください。");
+        resetSelections();
+        return;
+      }
+      const bestMatch = filteredSongs[Math.floor(Math.random() * filteredSongs.length)];
+      if (bestMatch) {
+        document.getElementById("title").innerText = bestMatch.title;
+        document.getElementById("bpm").innerText = bestMatch.bpm;
+        document.getElementById("lyrics").innerText = bestMatch.lyrics;
+        document.getElementById("video").innerHTML =
+          `<iframe width="100%" height="315" src="${bestMatch.youtube}" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+        document.getElementById("result").style.display = "block";
+      }
+      resetSelections();
+    }
+  </script>
+</body>
+</html>
