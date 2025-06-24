@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>K-POP おすすめアプリ</title>
+    <!-- Tailwind CSS CDN (モダンなデザインを手軽に実現！) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome CDN (かわいいアイコンを使える！) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Animate.css CDN (ちょっとしたアニメーションで動きをつける！) -->
+    <link rel="stylesheet" href="https://cdnjs/cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <style>
+        /* ここにカスタムのCSSスタイルを追加することもできるよ */
+        /* 例: スクロールバーのスタイルとか */
+        body {
+            font-family: 'Arial', sans-serif; /* フォント指定 */
+        }
+        .recommend-result-item {
+            display: flex; /* 曲名とハートアイコンを横並びに */
+            align-items: center; /* 縦方向中央揃え */
+            justify-content: space-between; /* スペースを均等に */
+        }
+         .like-list-item {
+            display: flex; /* 曲名と削除アイコンを横並びに */
+            align-items: center; /* 縦方向中央揃え */
+            justify-content: space-between; /* スペースを均等に */
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-r from-purple-400 via-pink-500 to-red-500 text-gray-800 min-h-screen flex flex-col">
+
+    <header class="bg-white bg-opacity-80 backdrop-filter backdrop-blur-lg shadow-md py-4">
+        <div class="container mx-auto px-4">
+            <h1 class="text-3xl font-bold text-center text-gray-800 drop-shadow">今日の気分でK-POPをおすすめ！🎧✨</h1>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto px-4 py-8 flex flex-col items-center">
+        <section class="bg-white bg-opacity-90 backdrop-filter backdrop-blur-lg p-6 rounded-xl shadow-lg w-full max-w-2xl mb-8 animate__animated animate__fadeInDown">
+            <h2 class="text-2xl font-semibold mb-4 text-center text-gray-700">今の気分はどんな感じ？ 👇</h2>
+            <div id="mood-selection" class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                <!-- 気分選択肢 (ラジオボタンを使うと一つだけ選べる) -->
+                <label class="flex items-center p-3 bg-pink-100 rounded-lg cursor-pointer hover:bg-pink-200 transition duration-200">
+                    <input type="radio" name="mood" value="uplifting" class="form-radio text-pink-600 mr-2">
+                    <span>元気！😊</span>
+                </label>
+                 <label class="flex items-center p-3 bg-blue-100 rounded-lg cursor-pointer hover:bg-blue-200 transition duration-200">
+                    <input type="radio" name="mood" value="chill" class="form-radio text-blue-600 mr-2">
+                    <span>まったり😌</span>
+                </label>
+                 <label class="flex items-center p-3 bg-yellow-100 rounded-lg cursor-pointer hover:bg-yellow-200 transition duration-200">
+                    <input type="radio" name="mood" value="energetic" class="form-radio text-yellow-600 mr-2">
+                    <span>ノリノリ！🥳</span>
+                </label>
+                 <label class="flex items-center p-3 bg-purple-100 rounded-lg cursor-pointer hover:bg-purple-200 transition duration-200">
+                    <input type="radio" name="mood" value="emotional" class="form-radio text-purple-600 mr-2">
+                    <span>感動🥺</span>
+                </label>
+                 <label class="flex items-center p-3 bg-green-100 rounded-lg cursor-pointer hover:bg-green-200 transition duration-200">
+                    <input type="radio" name="mood" value="trendy" class="form-radio text-green-600 mr-2">
+                    <span>流行り！📈</span>
+                </label>
+                 <label class="flex items-center p-3 bg-gray-200 rounded-lg cursor-pointer hover:bg-gray-300 transition duration-200">
+                    <input type="radio" name="mood" value="any" class="form-radio text-gray-600 mr-2" checked>
+                    <span>おまかせ！🤖</span>
+                </label>
+            </div>
+
+            <button id="recommendButton" class="w-full bg-pink-600 text-white py-3 rounded-lg text-xl font-semibold shadow-md hover:bg-pink-700 transition duration-200 transform hover:scale-105 animate__animated animate__pulse animate__infinite">
+                おすすめK-POPを教えて！✨
+            </button>
+        </section>
+
+        <!-- おすすめ結果表示エリア (最初は非表示) -->
+        <section id="result-section" class="bg-white bg-opacity-90 backdrop-filter backdrop-blur-lg p-6 rounded-xl shadow-lg w-full max-w-2xl mb-8 hidden animate__animated animate__fadeInUp">
+            <h2 class="text-2xl font-semibold mb-4 text-center text-gray-700">今日のおすすめK-POPはこれ！💖</h2>
+            <div id="recommendation-result" class="space-y-3">
+                <!-- おすすめされた曲がここに表示されるよ (JavaScriptで追加) -->
+            </div>
+        </section>
+
+        <!-- いいねリスト表示エリア (最初は非表示) -->
+         <section id="like-list-section" class="bg-white bg-opacity-90 backdrop-filter backdrop-blur-lg p-6 rounded-xl shadow-lg w-full max-w-2xl hidden animate__animated animate__fadeInUp">
+            <h2 class="text-2xl font-semibold mb-4 text-center text-gray-700">お気に入りの曲リスト ⭐</h2>
+            <ul id="like-list" class="space-y-3">
+                <!-- いいねした曲がここに表示されるよ (JavaScriptで追加) -->
+            </ul>
+        </section>
+
+    </main>
+
+    <footer class="bg-white bg-opacity-80 backdrop-filter backdrop-blur-lg shadow-md py-4 mt-auto">
+        <div class="container mx-auto px-4 text-center text-gray-600 text-sm">
+            <p>&copy; 2023 Your Name or Site Name. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Firebase SDKs -->
+    <!-- ウェブサイトからFirebaseを使うために必要なライブラリ -->
+    <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app-compat.js"></script>
+    <!-- Firestore (データベース) を使うためのライブラリ -->
+    <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-firestore-compat.js"></script>
+
+    <script>
+      // ★★★ ここに、君のFirebaseプロジェクトの設定情報を貼り付けてね！ ★★★
+      // 前に教えてくれたやつをそのままコピペすればOK！
+      const firebaseConfig = {
+        apiKey: "AIzaSyBrDmqO--rbyCVsrZGfsKMrcCssdeo1ags", // 君のapiKey
+        authDomain: "kpopsong-recommender-app.firebaseapp.com", // 君のauthDomain
+        projectId: "kpopsong-recommender-app", // 君のprojectId
+        storageBucket: "kpopsong-recommender-app.firebasestorage.app", // 君のstorageBucket
+        messagingSenderId: "902900743921", // 君のmessagingSenderId
+        appId: "1:902900743921:web:e5687ea274176cdcaa7350", // 君のappId
+        // measurementId: "G-09GTHJC46D" // Google Analytics を使うなら必要。使わないならこの行ごと消してOK。
+      };
+
+      // Firebaseを初期化！これでウェブページからFirebaseが使えるようになる魔法だよ！
+      const app = firebase.initializeApp(firebaseConfig);
+
+      // Firestoreデータベースを使えるように準備！ 'db' っていう名前でデータベースにアクセスするよ。
+      const db = firebase.firestore();
+
+      // ★ この下に、おすすめ機能やいいねリストの表示・保存などのJavaScriptコードを書いていくよ！ ★
+      // まだ何も書かなくて大丈夫！次のステップで一緒に書いていこうね。
+      console.log("Firebaseの初期化が完了しました！"); // 開発者ツールで確認してみてね！
+
+    </script>
+
+</body>
+</html>
