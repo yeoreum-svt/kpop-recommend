@@ -125,7 +125,145 @@
       // まだ何も書かなくて大丈夫！次のステップで一緒に書いていこうね。
       console.log("Firebaseの初期化が完了しました！"); // 開発者ツールで確認してみてね！
 
+    <script>
+      // ★★★ ここに、君のFirebaseプロジェクトの設定情報を貼り付けてね！ ★★★
+      // 前に教えてくれたやつをそのままコピペすればOK！
+      // もしまだなら、君のFirebaseプロジェクトからコピーしてきてね！
+      const firebaseConfig = {
+        apiKey: "AIzaSyBrDmqO--rbyCVsrZGfsKMrcCssdeo1ags", // 君のapiKeyをここに！
+        authDomain: "kpopsong-recommender-app.firebaseapp.com", // 君のauthDomainをここに！
+        projectId: "kpopsong-recommender-app", // 君のprojectIdをここに！
+        storageBucket: "kpopsong-recommender-app.firebasestorage.app", // 君のstorageBucketをここに！
+        messagingSenderId: "902900743921", // 君のmessagingSenderIdをここに！
+        appId: "1:902900743921:web:e5687ea274176cdcaa7350", // 君のappIdをここに！
+        // measurementId: "G-09GTHJC46D" // Google Analytics を使うなら必要。使わないならこの行ごと消してOK。
+      };
+
+      // Firebaseを初期化！これでウェブページからFirebaseが使えるようになる魔法だよ！
+      const app = firebase.initializeApp(firebaseConfig);
+
+      // Firestoreデータベースを使えるように準備！ 'db' っていう名前でデータベースにアクセスするよ。
+      const db = firebase.firestore();
+
+      // ★ この下に、おすすめ機能やいいねリストの表示・保存などのJavaScriptコードを書いていくよ！ ★
+
+      // HTML要素を取得 (getElementByIdで、HTMLファイルに書いたidを使って要素を見つけるよ)
+      const recommendButton = document.getElementById('recommendButton'); // おすすめボタン
+      const moodSelection = document.getElementById('mood-selection');     // 気分選択エリア
+      const recommendationResult = document.getElementById('recommendation-result'); // おすすめ結果を表示する場所
+      const resultSection = document.getElementById('result-section');   // おすすめ結果のセクション全体
+      const likeList = document.getElementById('like-list');         // いいねリストを表示する場所
+      const likeListSection = document.getElementById('like-list-section'); // いいねリストのセクション全体
+
+
+      // おすすめボタンがクリックされたときに動く関数
+      recommendButton.addEventListener('click', async () => {
+          console.log("おすすめボタンが押されました！"); // ボタンが押されたか確認
+
+          // ユーザーが選んだ気分を取得
+          // moodSelectionエリアの中にある、name="mood"のラジオボタンで、checked（チェックされている）ものを探す
+          const selectedMoodRadio = moodSelection.querySelector('input[name="mood"]:checked');
+          let selectedMood = 'any'; // デフォルトはおまかせ（any）
+
+          if (selectedMoodRadio) {
+              selectedMood = selectedMoodRadio.value; // チェックされてたらその値を取得
+          }
+
+          console.log("選ばれた気分:", selectedMood); // 選ばれた気分を確認
+
+          // ここでFirebaseから曲のデータを取得する処理を書く（今はまだダミーデータで試すよ！）
+          // 本番ではdb.collection('songs').where(...)のようにFirestoreからデータを取得します
+          const dummySongs = [
+              { name: "Dynamite", artist: "BTS", mood: ["uplifting", "energetic", "trendy"] },
+              { name: "Ditto", artist: "NewJeans", mood: ["chill", "emotional", "trendy"] },
+              { name: "Love Dive", artist: "IVE", mood: ["trendy", "uplifting"] },
+              { name: "Hype Boy", artist: "NewJeans", mood: ["energetic", "trendy"] },
+              { name: "Gee", artist: "Girls' Generation", mood: ["uplifting", "energetic"] }
+          ];
+
+          // 選ばれた気分に合う曲をフィルタリング (selectedMoodが'any'の場合は全部表示)
+          const recommendedSongs = dummySongs.filter(song =>
+              selectedMood === 'any' || song.mood.includes(selectedMood)
+          );
+
+          console.log("おすすめされた曲:", recommendedSongs); // おすすめされた曲を確認
+
+          // おすすめ結果エリアを一旦クリア
+          recommendationResult.innerHTML = '';
+
+          // おすすめされた曲を表示
+          if (recommendedSongs.length > 0) {
+              recommendedSongs.forEach(song => {
+                  // 曲名とハートアイコンを表示する要素を作成
+                  const songElement = document.createElement('div');
+                  songElement.classList.add('recommend-result-item', 'text-lg', 'py-2', 'border-b', 'border-gray-200'); // スタイルを追加
+                  songElement.innerHTML = `
+                      <span>${song.name} - ${song.artist}</span>
+                      <i class="fa-regular fa-heart text-red-500 cursor-pointer hover:text-red-600 transition duration-200 like-button" data-song-name="${song.name}" data-artist-name="${song.artist}"></i>
+                  `;
+                  recommendationResult.appendChild(songElement); // 結果エリアに追加
+              });
+
+              // おすすめ結果セクションを表示する
+              resultSection.classList.remove('hidden');
+               resultSection.classList.add('animate__fadeInUp'); // アニメーション
+
+          } else {
+              // おすすめが見つからなかった場合
+              recommendationResult.innerHTML = '<p class="text-center text-gray-600">ごめんね、その気分に合う曲が見つからなかったよ😢</p>';
+              resultSection.classList.remove('hidden');
+              resultSection.classList.add('animate__fadeInUp'); // アニメーション
+          }
+      });
+
+      // いいねボタンがクリックされたときに動く処理（イベント委譲を使うよ！）
+      // recommendationResultエリアの中でクリックが発生したときに、それが.like-buttonクラスの要素だったら、という処理
+      recommendationResult.addEventListener('click', (event) => {
+          // クリックされた要素が.like-buttonクラスを持っているか確認
+          if (event.target.classList.contains('like-button')) {
+              const likeButton = event.target; // いいねボタン要素を取得
+              const songName = likeButton.dataset.songName; // data-song-name属性から曲名を取得
+              const artistName = likeButton.dataset.artistName; // data-artist-name属性からアーティスト名を取得
+
+              console.log(`「${songName} - ${artistName}」にいいね！されました！`); // いいねされたか確認
+
+              // ここでいいねリストに追加する処理を書く
+              addSongToLikeList({ name: songName, artist: artistName }); // いいねリストに追加する関数を呼び出し
+
+              // いいねアイコンを塗りつぶしハートに変える（見た目のフィードバック）
+              likeButton.classList.remove('fa-regular'); // 塗りつぶしではないハートアイコンのクラスを削除
+              likeButton.classList.add('fa-solid');    // 塗りつぶしハートアイコンのクラスを追加
+               likeButton.classList.add('text-red-600'); // 色を濃くする
+              likeButton.style.pointerEvents = 'none'; // もうクリックできないようにする（二重いいね防止）
+          }
+      });
+
+      // いいねリストに追加する関数
+      function addSongToLikeList(song) {
+          console.log("いいねリストに追加中:", song); // 追加する曲を確認
+
+          // ここでブラウザのlocalStorageに保存したり、Firebaseに保存したりする処理を書く
+          // 今回は簡単な例として、画面上のリストに追加するだけにするね！
+          const listItem = document.createElement('li');
+           listItem.classList.add('like-list-item', 'text-lg', 'py-2', 'border-b', 'border-gray-200'); // スタイルを追加
+          listItem.innerHTML = `
+              <span>${song.name} - ${song.artist}</span>
+              <i class="fa-solid fa-trash-can text-gray-400 cursor-pointer hover:text-red-500 transition duration-200 delete-like-button"></i>
+          `;
+          likeList.appendChild(listItem); // いいねリストに追加
+
+          // いいねリストセクションを表示する
+          likeListSection.classList.remove('hidden');
+           likeListSection.classList.add('animate__fadeInUp'); // アニメーション
+      }
+
+      // ★★★ 注意点 ★★★
+      // 現状、いいねリストはページを更新すると消えちゃいます。
+      // 永続的に保存するには、ブラウザのlocalStorageを使うか、Firebase Firestoreに保存する必要があります。
+      // それはまた次のステップで一緒にやっていこうね！
+
+
+      console.log("JavaScriptコードの読み込みが完了しました！"); // 開発者ツールで確認してみてね！
+
     </script>
 
-</body>
-</html>
